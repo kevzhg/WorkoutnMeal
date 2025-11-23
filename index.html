@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fitness Tracker - Workouts, Meals & Weight</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Navigation -->
+        <nav class="main-nav">
+            <div class="nav-brand">
+                <h1>💪 Fitness Tracker</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" data-page="dashboard" class="nav-link active">Dashboard</a></li>
+                <li><a href="#" data-page="workouts" class="nav-link">Workouts</a></li>
+                <li><a href="#" data-page="meals" class="nav-link">Meal Plan</a></li>
+                <li><a href="#" data-page="weight" class="nav-link">Weight Calendar</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Page -->
+            <section id="dashboard" class="page active">
+                <h2>Dashboard</h2>
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>Today's Workout</h3>
+                        <div id="dashboard-workout-summary">
+                            <p class="no-data">No workout logged today</p>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Today's Meals</h3>
+                        <div id="dashboard-meals-summary">
+                            <p class="no-data">No meals logged today</p>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Current Weight</h3>
+                        <div id="dashboard-weight-summary">
+                            <p class="no-data">No weight logged</p>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Weekly Progress</h3>
+                        <div id="dashboard-progress">
+                            <p class="no-data">Start logging to see progress</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Workouts Page -->
+            <section id="workouts" class="page">
+                <h2>Workout Tracker</h2>
+                <div class="page-content">
+                    <div class="form-section">
+                        <h3>Add Workout</h3>
+                        <form id="workout-form">
+                            <div class="form-group">
+                                <label for="workout-date">Date</label>
+                                <input type="date" id="workout-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="workout-type">Workout Type</label>
+                                <select id="workout-type" required>
+                                    <option value="">Select type...</option>
+                                    <option value="strength">Strength Training</option>
+                                    <option value="cardio">Cardio</option>
+                                    <option value="hiit">HIIT</option>
+                                    <option value="yoga">Yoga</option>
+                                    <option value="stretching">Stretching</option>
+                                    <option value="sports">Sports</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="workout-duration">Duration (minutes)</label>
+                                <input type="number" id="workout-duration" min="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="workout-exercises">Exercises</label>
+                                <textarea id="workout-exercises" rows="4" placeholder="e.g., Bench Press 3x10, Squats 4x8..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="workout-notes">Notes</label>
+                                <textarea id="workout-notes" rows="2" placeholder="How did you feel?"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Workout</button>
+                        </form>
+                    </div>
+                    <div class="list-section">
+                        <h3>Workout History</h3>
+                        <div id="workout-list" class="item-list">
+                            <p class="no-data">No workouts logged yet</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Meals Page -->
+            <section id="meals" class="page">
+                <h2>Meal Plan</h2>
+                <div class="page-content">
+                    <div class="form-section">
+                        <h3>Add Meal</h3>
+                        <form id="meal-form">
+                            <div class="form-group">
+                                <label for="meal-date">Date</label>
+                                <input type="date" id="meal-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="meal-type">Meal Type</label>
+                                <select id="meal-type" required>
+                                    <option value="">Select meal...</option>
+                                    <option value="breakfast">Breakfast</option>
+                                    <option value="lunch">Lunch</option>
+                                    <option value="dinner">Dinner</option>
+                                    <option value="snack">Snack</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="meal-name">Meal Name</label>
+                                <input type="text" id="meal-name" placeholder="e.g., Grilled Chicken Salad" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="meal-calories">Calories (optional)</label>
+                                <input type="number" id="meal-calories" min="0" placeholder="e.g., 500">
+                            </div>
+                            <div class="form-group">
+                                <label for="meal-protein">Protein (g, optional)</label>
+                                <input type="number" id="meal-protein" min="0" placeholder="e.g., 30">
+                            </div>
+                            <div class="form-group">
+                                <label for="meal-description">Description/Ingredients</label>
+                                <textarea id="meal-description" rows="3" placeholder="List ingredients or describe the meal..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Meal</button>
+                        </form>
+                    </div>
+                    <div class="list-section">
+                        <h3>Meal History</h3>
+                        <div id="meal-list" class="item-list">
+                            <p class="no-data">No meals logged yet</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Weight Calendar Page -->
+            <section id="weight" class="page">
+                <h2>Weight Calendar</h2>
+                <div class="page-content weight-page">
+                    <div class="form-section">
+                        <h3>Log Weight</h3>
+                        <form id="weight-form">
+                            <div class="form-group">
+                                <label for="weight-date">Date</label>
+                                <input type="date" id="weight-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="weight-value">Weight</label>
+                                <div class="input-group">
+                                    <input type="number" id="weight-value" step="0.1" min="0" required>
+                                    <select id="weight-unit">
+                                        <option value="lbs">lbs</option>
+                                        <option value="kg">kg</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="weight-notes">Notes (optional)</label>
+                                <input type="text" id="weight-notes" placeholder="e.g., After workout">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Log Weight</button>
+                        </form>
+                    </div>
+                    <div class="calendar-section">
+                        <div class="calendar-header">
+                            <button id="prev-month" class="btn btn-secondary">&lt; Prev</button>
+                            <h3 id="calendar-month-year">January 2024</h3>
+                            <button id="next-month" class="btn btn-secondary">Next &gt;</button>
+                        </div>
+                        <div class="calendar-grid">
+                            <div class="calendar-weekdays">
+                                <span>Sun</span>
+                                <span>Mon</span>
+                                <span>Tue</span>
+                                <span>Wed</span>
+                                <span>Thu</span>
+                                <span>Fri</span>
+                                <span>Sat</span>
+                            </div>
+                            <div id="calendar-days" class="calendar-days">
+                                <!-- Days will be generated by JavaScript -->
+                            </div>
+                        </div>
+                        <div class="weight-stats">
+                            <div class="stat">
+                                <span class="stat-label">Starting Weight</span>
+                                <span id="starting-weight" class="stat-value">--</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Current Weight</span>
+                                <span id="current-weight" class="stat-value">--</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Change</span>
+                                <span id="weight-change" class="stat-value">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script type="module" src="dist/app.js"></script>
+</body>
+</html>
