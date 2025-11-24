@@ -12,6 +12,7 @@ import {
 } from './types.js';
 
 import {
+    initStorage,
     addWorkout,
     getWorkouts,
     getWorkoutsByDate,
@@ -188,7 +189,7 @@ function initWorkoutForm(): void {
     // Set default date to today
     dateInput.value = getTodayString();
 
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const workout = {
@@ -199,7 +200,7 @@ function initWorkoutForm(): void {
             notes: (form.querySelector('#workout-notes') as HTMLTextAreaElement).value
         };
 
-        addWorkout(workout);
+        await addWorkout(workout);
         form.reset();
         dateInput.value = getTodayString();
         refreshWorkoutList();
@@ -235,10 +236,10 @@ function refreshWorkoutList(): void {
 
     // Add delete handlers
     listContainer.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
             const id = btn.getAttribute('data-id');
             if (id && confirm('Delete this workout?')) {
-                deleteWorkout(id);
+                await deleteWorkout(id);
                 refreshWorkoutList();
                 showNotification('Workout deleted');
             }
@@ -254,7 +255,7 @@ function initMealForm(): void {
     // Set default date to today
     dateInput.value = getTodayString();
 
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const caloriesInput = (form.querySelector('#meal-calories') as HTMLInputElement).value;
@@ -269,7 +270,7 @@ function initMealForm(): void {
             description: (form.querySelector('#meal-description') as HTMLTextAreaElement).value
         };
 
-        addMeal(meal);
+        await addMeal(meal);
         form.reset();
         dateInput.value = getTodayString();
         refreshMealList();
@@ -308,10 +309,10 @@ function refreshMealList(): void {
 
     // Add delete handlers
     listContainer.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
             const id = btn.getAttribute('data-id');
             if (id && confirm('Delete this meal?')) {
-                deleteMeal(id);
+                await deleteMeal(id);
                 refreshMealList();
                 showNotification('Meal deleted');
             }
@@ -327,7 +328,7 @@ function initWeightForm(): void {
     // Set default date to today
     dateInput.value = getTodayString();
 
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const entry = {
@@ -337,7 +338,7 @@ function initWeightForm(): void {
             notes: (form.querySelector('#weight-notes') as HTMLInputElement).value
         };
 
-        addWeightEntry(entry);
+        await addWeightEntry(entry);
         form.reset();
         dateInput.value = getTodayString();
         renderCalendar();
@@ -477,7 +478,10 @@ function showNotification(message: string): void {
 }
 
 // Initialize application
-function init(): void {
+async function init(): Promise<void> {
+    // Initialize storage (connects to API or falls back to localStorage)
+    await initStorage();
+
     initNavigation();
     initWorkoutForm();
     initMealForm();
