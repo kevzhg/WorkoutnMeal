@@ -107,4 +107,27 @@ export interface WorkoutProgramDocument extends WorkoutProgram {
 export type WorkoutProgramInput = OmitId<WorkoutProgram> & {
     id?: string;
 };
+export interface OnigiriItem {
+    id: string;
+    title: string;
+    notes?: string;
+    weight: number;
+    done: boolean;
+    completion?: number;
+    updatedAt?: string;
+}
+export interface OnigiriSection {
+    id: string;
+    name: string;
+    weight: number;
+    items: OnigiriItem[];
+    completion?: number;
+    updatedAt?: string;
+}
+export interface OnigiriPlanner {
+    id: string;
+    sections: OnigiriSection[];
+    completion?: number;
+    updatedAt?: string;
+}
 //# sourceMappingURL=types.d.ts.map

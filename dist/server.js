@@ -11,10 +11,12 @@ const MONGO_COLLECTION = process.env.MONGODB_COLLECTION_TRAININGS
     || 'trainings';
 const MONGO_COLLECTION_MEALS = process.env.MONGODB_COLLECTION_MEALS || 'meals';
 const MONGO_COLLECTION_WEIGHT = process.env.MONGODB_COLLECTION_WEIGHT || 'weight';
+const MONGO_COLLECTION_ONIGIRI = process.env.MONGODB_COLLECTION_ONIGIRI || 'onigiri';
 const client = new MongoClient(MONGO_URI);
 let trainingsCollection = null;
 let mealsCollection = null;
 let weightCollection = null;
+let onigiriCollection = null;
 async function connectDb() {
     if (!trainingsCollection) {
         await client.connect();
@@ -22,10 +24,12 @@ async function connectDb() {
         trainingsCollection = db.collection(MONGO_COLLECTION);
         mealsCollection = db.collection(MONGO_COLLECTION_MEALS);
         weightCollection = db.collection(MONGO_COLLECTION_WEIGHT);
+        onigiriCollection = db.collection(MONGO_COLLECTION_ONIGIRI);
         await trainingsCollection.createIndex({ date: 1 });
         await trainingsCollection.createIndex({ createdAt: -1 });
         await mealsCollection.createIndex({ date: 1 });
         await weightCollection.createIndex({ date: 1 });
+        await onigiriCollection.createIndex({ id: 1 }, { unique: true });
     }
 }
 // Middleware
@@ -54,6 +58,25 @@ function weightToResponse(doc) {
     const { _id, ...rest } = doc;
     return { id: _id?.toString(), ...rest };
 }
+function onigiriToResponse(doc) {
+    const { _id, ...rest } = doc;
+    const serializeDate = (value) => value ? value.toISOString() : undefined;
+    return {
+        id: rest.id,
+        completion: rest.completion,
+        updatedAt: serializeDate(rest.updatedAt),
+        sections: (rest.sections || []).map(section => ({
+            ...section,
+            completion: section.completion,
+            updatedAt: serializeDate(section.updatedAt),
+            items: (section.items || []).map(item => ({
+                ...item,
+                completion: item.completion,
+                updatedAt: serializeDate(item.updatedAt)
+            }))
+        }))
+    };
+}
 function parseId(id) {
     try {
         return new ObjectId(id);
@@ -61,6 +84,91 @@ function parseId(id) {
     catch {
         return null;
     }
+}
+function normalizeWeight(weight) {
+    if (typeof weight === 'number' && Number.isFinite(weight) && weight > 0) {
+        return weight;
+    }
+    return 1;
+}
+function calculateSectionCompletion(section) {
+    const items = section.items || [];
+    if (items.length === 0)
+        return 0;
+    const totalWeight = items.reduce((sum, item) => sum + normalizeWeight(item.weight), 0);
+    if (totalWeight <= 0)
+        return 0;
+    const completedWeight = items.reduce((sum, item) => sum + (item.done ? normalizeWeight(item.weight) : 0), 0);
+    return completedWeight / totalWeight;
+}
+function calculatePlannerCompletion(sections) {
+    if (sections.length === 0)
+        return 0;
+    const totalWeight = sections.reduce((sum, section) => sum + normalizeWeight(section.weight), 0);
+    if (totalWeight <= 0)
+        return 0;
+    const weightedSum = sections.reduce((sum, section) => sum + normalizeWeight(section.weight) * (section.completion ?? 0), 0);
+    return weightedSum / totalWeight;
+}
+function normalizeItemPayload(raw, now) {
+    if (!raw.id || typeof raw.id !== 'string')
+        return null;
+    if (!raw.title || typeof raw.title !== 'string')
+        return null;
+    return {
+        id: raw.id,
+        title: raw.title,
+        notes: raw.notes ?? '',
+        weight: normalizeWeight(raw.weight),
+        done: Boolean(raw.done),
+        completion: raw.done ? 1 : 0,
+        updatedAt: raw.updatedAt ?? now
+    };
+}
+function normalizeSectionPayload(raw, now) {
+    if (!raw.id || typeof raw.id !== 'string')
+        return null;
+    if (!raw.name || typeof raw.name !== 'string')
+        return null;
+    const items = [];
+    for (const item of raw.items || []) {
+        const normalized = normalizeItemPayload(item, now);
+        if (!normalized)
+            return null;
+        items.push(normalized);
+    }
+    const section = {
+        id: raw.id,
+        name: raw.name,
+        weight: normalizeWeight(raw.weight),
+        items,
+        updatedAt: now
+    };
+    section.completion = calculateSectionCompletion(section);
+    return section;
+}
+function buildPlannerDoc(payload, existing) {
+    if (!payload.id || typeof payload.id !== 'string')
+        return null;
+    const now = new Date();
+    const sections = [];
+    for (const section of payload.sections || []) {
+        const normalized = normalizeSectionPayload(section, now);
+        if (!normalized)
+            return null;
+        sections.push(normalized);
+    }
+    const doc = {
+        id: payload.id,
+        sections,
+        createdAt: existing?.createdAt ?? now,
+        updatedAt: now
+    };
+    doc.completion = calculatePlannerCompletion(doc.sections);
+    if (existing && existing._id) {
+        doc._id = existing._id;
+    }
+    return doc;
 }
 // Routes (trainings + backward-compatible workouts alias)
 app.get('/api/trainings', async (_req, res) => {
@@ -251,6 +359,39 @@ app.delete('/api/weight/:id', async (req, res) => {
     if (result.deletedCount === 0)
         return res.status(404).json({ message: 'Weight entry not found' });
     res.status(204).send();
+});
+// Onigiri Planner
+app.get('/api/onigiri', async (_req, res) => {
+    if (!onigiriCollection)
+        return res.status(500).json({ message: 'DB not initialized' });
+    const existing = await onigiriCollection.findOne({});
+    if (!existing) {
+        const now = new Date();
+        const doc = {
+            id: new ObjectId().toHexString(),
+            sections: [],
+            completion: 0,
+            createdAt: now,
+            updatedAt: now
+        };
+        const result = await onigiriCollection.insertOne(doc);
+        return res.json(onigiriToResponse({ ...doc, _id: result.insertedId }));
+    }
+    res.json(onigiriToResponse(existing));
+});
+app.put('/api/onigiri', async (req, res) => {
+    if (!onigiriCollection)
+        return res.status(500).json({ message: 'DB not initialized' });
+    const payload = req.body;
+    const existing = payload.id
+        ? await onigiriCollection.findOne({ id: payload.id })
+        : await onigiriCollection.findOne({});
+    const doc = buildPlannerDoc(payload, existing || undefined);
+    if (!doc)
+        return res.status(400).json({ message: 'Invalid payload for Onigiri planner' });
+    await onigiriCollection.updateOne({ id: doc.id }, { $set: doc }, { upsert: true });
+    const saved = await onigiriCollection.findOne({ id: doc.id });
+    res.json(onigiriToResponse(saved || doc));
 });
 app.listen(PORT, () => {
     console.log(`🚀 Server is running at http://localhost:${PORT}`);

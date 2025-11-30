@@ -1,4 +1,5 @@
-# Chat Notes
+# Note: Going forward, please always write to this file to keep the record of the chat up to date, and I can always retrieve the context by reviewing this file. Always read this file through to understand the context. Ask the user which step we are on, then read through the project to understand the context. Use the slowest thinking model; take the time needed. Ask the user if there are any questions.
+
 
 - Where is `liveWorkout.ts`?  
   Found at `src/liveWorkout.ts` (619 lines) and reviewed structure; overall project files: `app.ts`, `liveWorkout.ts`, `storage.ts`, `types.ts`, `server.ts`.
@@ -91,3 +92,23 @@
 - Adjustment: Removed “Machine” equipment tags in exercise library metadata (Leg Press → Dumbbells, Leg Curls → Bands, Calf Raises → Dumbbells) to avoid machine-only gear.
 
 - Request: Add provided warm-up and Push/Pull/Legs exercise list into exercise library/program defaults (with tags); solution: pending.
+
+- Onigiri Planner: New nav tab/page with hero progress onigiri graphic, weighted sections/items, inline editing, add/edit/delete controls, and localStorage persistence (`onigiri-planner`). Uses `src/onigiri.ts` module wired from `app.ts`, types in `types.ts`, layout in `index.html`, styles in `styles.css`.
+
+- Onigiri Planner UI update: weights hidden behind gear popovers (sections/items), single-line item layout, add-row simplified; gear popovers styled with accent. Default weights unchanged; edits still persist.
+
+- Onigiri Planner layout: Sections now span full width in a single column with added vertical spacing; item lists and add rows stretch full width while keeping one-line rows; gear-hidden weights unchanged.
+
+- Onigiri Planner persistence: Added Mongo-backed API endpoints (`/api/onigiri`, collection env `MONGODB_COLLECTION_ONIGIRI`, default `onigiri`) with server-side completion calculation; storage helpers to load/save planner with local fallback; planner UI now loads from API, saves on change (with status indicator), keeps gear-hidden weights, and retains local fallback.
+
+- Onigiri Planner UI actions: Section/item weight and delete controls are now in a soft overflow menu (⋮) with “Configure weight” opening the gear popover and “Delete”; menus close on action/outside click; styling matches pills/shadows.
+
+- Onigiri item row tweak: Overflow toggle now lives on the same row as the item title/checkbox (aligned right) to remove extra vertical space; notes remain full-width underneath.
+
+- Onigiri section header: Section name is inline with the header label/progress, editable on click with inline input; removed separate name field and rename option; overflow/weight behaviors unchanged.
+
+- Onigiri section header update: Shows the section name inline (non-editable by default); rename now via overflow menu prompt; removed inline edit/hover state while keeping other controls intact.
+
+- Onigiri save robustness: Added pending-save queue so rapid edits aren’t dropped while a save is in flight; status still reflects saving/saved/error.
+
+- Onigiri save retry: Added clearer error text, online retry hook, and queued retry timer so failed saves keep trying after temporary API outages; still stores locally when offline.

@@ -35,6 +35,9 @@
           <li>
             <a href="#" data-page="weight" class="nav-link">Weight Calendar</a>
           </li>
+          <li>
+            <a href="#" data-page="onigiri" class="nav-link">Onigiri</a>
+          </li>
         </ul>
       </nav>
 
@@ -435,6 +438,61 @@
               </div>
             </div>
           </div>
+        </section>
+
+        <!-- Onigiri Planner Page -->
+        <section id="onigiri" class="page onigiri-page">
+          <h2>Onigiri Planner</h2>
+          <div class="onigiri-hero card">
+            <div class="onigiri-hero-text">
+              <p class="eyebrow">Onigiri Shop</p>
+              <h2>Planner</h2>
+              <p class="small-text">
+                Map every task to open day — permits, recipes, marketing, and logistics.
+              </p>
+              <div class="onigiri-hero-chips">
+                <span class="chip subtle" id="onigiri-progress-pill">0% complete</span>
+                <span class="chip subtle" id="onigiri-item-count">No items yet</span>
+                <span class="onigiri-save-status" id="onigiri-save-status"></span>
+              </div>
+            </div>
+            <div class="onigiri-hero-visual">
+              <div class="onigiri-shape">
+                <div class="onigiri-fill" id="onigiri-fill"></div>
+                <div class="onigiri-nori"></div>
+                <div class="onigiri-seed seed-a"></div>
+                <div class="onigiri-seed seed-b"></div>
+                <div class="onigiri-seed seed-c"></div>
+                <div class="onigiri-progress-number" id="onigiri-progress-number">0%</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="onigiri-controls card">
+            <div class="onigiri-controls-header">
+              <div>
+                <p class="eyebrow">Sections</p>
+                <h3>Break down your launch</h3>
+                <p class="small-text">Add weighted sections to track tasks evenly or by impact.</p>
+              </div>
+              <div class="onigiri-control-fields">
+                <div class="onigiri-field">
+                  <label class="label-caps" for="onigiri-section-name">Section name</label>
+                  <input
+                    type="text"
+                    id="onigiri-section-name"
+                    class="onigiri-input"
+                    placeholder="e.g., Business Plan"
+                  />
+                </div>
+                <button id="onigiri-add-section" class="btn btn-primary" type="button">
+                  + Add Section
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="onigiri-sections" class="onigiri-sections-grid"></div>
         </section>
       </main>
     </div>

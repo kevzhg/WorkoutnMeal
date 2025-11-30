@@ -1,5 +1,6 @@
 const ACTIVE_WORKOUT_KEY = 'fitness-tracker-active-workout';
 const WORKOUT_PROGRAMS_KEY = 'fitness-tracker-programs';
+const ONIGIRI_PLANNER_KEY = 'onigiri-planner';
 // Allow overriding the API base URL via a global for prod (GitHub Pages) while keeping localhost as the dev default.
 const API_BASE_URL = (typeof window !== 'undefined' && window.API_BASE_URL) || 'http://localhost:8000/api';
 function generateProgramId(existingIds) {
@@ -9,6 +10,9 @@ function generateProgramId(existingIds) {
         id = `program-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
     } while (used.has(id));
     return id;
+}
+function generatePlannerId() {
+    return `onigiri-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 }
 // This will hold all data fetched from the server
 let db = { trainings: [], meals: [], weight: [] };
@@ -92,6 +96,37 @@ function normalizeWeight(raw) {
     const cleaned = { ...raw, id: id ? String(id) : undefined };
     delete cleaned._id;
     return cleaned;
+}
+function normalizeOnigiriPlanner(raw) {
+    const plannerId = raw.id ?? raw._id ?? generatePlannerId();
+    const sections = Array.isArray(raw.sections) ? raw.sections : [];
+    const normalizedSections = sections.map(section => {
+        const sectionId = section.id ?? generatePlannerId();
+        const items = Array.isArray(section.items) ? section.items : [];
+        const normalizedItems = items.map(item => ({
+            id: item.id ?? generatePlannerId(),
+            title: item.title ?? 'New Item',
+            notes: item.notes ?? '',
+            weight: typeof item.weight === 'number' && Number.isFinite(item.weight) && item.weight > 0 ? item.weight : 1,
+            done: Boolean(item.done),
+            completion: item.completion,
+            updatedAt: item.updatedAt
+        }));
+        return {
+            id: sectionId,
+            name: section.name ?? 'Untitled Section',
+            weight: typeof section.weight === 'number' && Number.isFinite(section.weight) && section.weight > 0 ? section.weight : 1,
+            items: normalizedItems,
+            completion: section.completion,
+            updatedAt: section.updatedAt
+        };
+    });
+    return {
+        id: String(plannerId),
+        sections: normalizedSections,
+        completion: raw.completion,
+        updatedAt: raw.updatedAt
+    };
 }
 function normalizeWorkoutProgram(raw) {
     const id = raw.id ?? raw._id ?? `program-${Date.now()}`;
@@ -318,6 +353,58 @@ async function persistWorkoutPrograms(programs) {
 async function persistWorkoutProgramsToApi(_programs) {
     // Stub for future Mongo-backed persistence when an API endpoint exists.
     return Promise.resolve();
+}
+// --- Onigiri Planner (API-first with local fallback) ---
+function getLocalOnigiriPlanner() {
+    try {
+        const data = localStorage.getItem(ONIGIRI_PLANNER_KEY);
+        return data ? normalizeOnigiriPlanner(JSON.parse(data)) : null;
+    }
+    catch (error) {
+        console.error('Error loading local Onigiri planner:', error);
+        return null;
+    }
+}
+function saveLocalOnigiriPlanner(planner) {
+    try {
+        localStorage.setItem(ONIGIRI_PLANNER_KEY, JSON.stringify(planner));
+    }
+    catch (error) {
+        console.error('Error saving local Onigiri planner:', error);
+    }
+}
+export async function getOnigiriPlanner() {
+    try {
+        const remote = await apiGet('onigiri');
+        const normalized = normalizeOnigiriPlanner(remote);
+        db.onigiriPlanner = normalized;
+        saveLocalOnigiriPlanner(normalized);
+        return normalized;
+    }
+    catch (error) {
+        console.error('Error fetching Onigiri planner from API:', error);
+        const local = getLocalOnigiriPlanner();
+        if (local) {
+            db.onigiriPlanner = local;
+            return local;
+        }
+        throw error;
+    }
+}
+export async function saveOnigiriPlanner(planner) {
+    try {
+        const payload = { ...planner };
+        delete payload._id;
+        const saved = normalizeOnigiriPlanner(await apiPut('onigiri', payload));
+        db.onigiriPlanner = saved;
+        saveLocalOnigiriPlanner(saved);
+        return saved;
+    }
+    catch (error) {
+        console.error('Error saving Onigiri planner:', error);
+        saveLocalOnigiriPlanner(planner);
+        throw error;
+    }
 }
 // --- Active Workout Management (uses localStorage) ---
 // This is session state, so localStorage is the perfect place for it.

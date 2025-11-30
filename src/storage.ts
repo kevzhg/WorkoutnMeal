@@ -8,11 +8,13 @@ import {
     Exercise,
     ExerciseType,
     ActiveWorkout,
-    OmitId
+    OmitId,
+    OnigiriPlanner
 } from './types.js';
 
 const ACTIVE_WORKOUT_KEY = 'fitness-tracker-active-workout';
 const WORKOUT_PROGRAMS_KEY = 'fitness-tracker-programs';
+const ONIGIRI_PLANNER_KEY = 'onigiri-planner';
 // Allow overriding the API base URL via a global for prod (GitHub Pages) while keeping localhost as the dev default.
 const API_BASE_URL = (typeof window !== 'undefined' && (window as any).API_BASE_URL) || 'http://localhost:8000/api';
 
@@ -25,10 +27,15 @@ function generateProgramId(existingIds?: Set<string>): string {
     return id;
 }
 
+function generatePlannerId(): string {
+    return `onigiri-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+}
+
 interface Database {
     trainings: Training[];
     meals: Meal[];
     weight: WeightEntry[];
+    onigiriPlanner?: OnigiriPlanner;
 }
 
 // This will hold all data fetched from the server
@@ -122,6 +129,40 @@ function normalizeWeight(raw: WeightEntry): WeightEntry {
     const cleaned = { ...raw, id: id ? String(id) : undefined };
     delete (cleaned as any)._id;
     return cleaned;
+}
+
+function normalizeOnigiriPlanner(raw: OnigiriPlanner): OnigiriPlanner {
+    const plannerId = (raw as any).id ?? (raw as any)._id ?? generatePlannerId();
+    const sections = Array.isArray(raw.sections) ? raw.sections : [];
+    const normalizedSections = sections.map(section => {
+        const sectionId = (section as any).id ?? generatePlannerId();
+        const items = Array.isArray(section.items) ? section.items : [];
+        const normalizedItems = items.map(item => ({
+            id: (item as any).id ?? generatePlannerId(),
+            title: item.title ?? 'New Item',
+            notes: item.notes ?? '',
+            weight: typeof item.weight === 'number' && Number.isFinite(item.weight) && item.weight > 0 ? item.weight : 1,
+            done: Boolean(item.done),
+            completion: item.completion,
+            updatedAt: item.updatedAt
+        }));
+
+        return {
+            id: sectionId,
+            name: section.name ?? 'Untitled Section',
+            weight: typeof section.weight === 'number' && Number.isFinite(section.weight) && section.weight > 0 ? section.weight : 1,
+            items: normalizedItems,
+            completion: section.completion,
+            updatedAt: section.updatedAt
+        };
+    });
+
+    return {
+        id: String(plannerId),
+        sections: normalizedSections,
+        completion: raw.completion,
+        updatedAt: raw.updatedAt
+    };
 }
 
 function normalizeWorkoutProgram(raw: WorkoutProgramDocument): WorkoutProgram {
@@ -372,6 +413,59 @@ async function persistWorkoutPrograms(programs: WorkoutProgram[]): Promise<void>
 async function persistWorkoutProgramsToApi(_programs: WorkoutProgramDocument[]): Promise<void> {
     // Stub for future Mongo-backed persistence when an API endpoint exists.
     return Promise.resolve();
+}
+
+// --- Onigiri Planner (API-first with local fallback) ---
+
+function getLocalOnigiriPlanner(): OnigiriPlanner | null {
+    try {
+        const data = localStorage.getItem(ONIGIRI_PLANNER_KEY);
+        return data ? normalizeOnigiriPlanner(JSON.parse(data)) : null;
+    } catch (error) {
+        console.error('Error loading local Onigiri planner:', error);
+        return null;
+    }
+}
+
+function saveLocalOnigiriPlanner(planner: OnigiriPlanner): void {
+    try {
+        localStorage.setItem(ONIGIRI_PLANNER_KEY, JSON.stringify(planner));
+    } catch (error) {
+        console.error('Error saving local Onigiri planner:', error);
+    }
+}
+
+export async function getOnigiriPlanner(): Promise<OnigiriPlanner> {
+    try {
+        const remote = await apiGet<OnigiriPlanner>('onigiri');
+        const normalized = normalizeOnigiriPlanner(remote);
+        db.onigiriPlanner = normalized;
+        saveLocalOnigiriPlanner(normalized);
+        return normalized;
+    } catch (error) {
+        console.error('Error fetching Onigiri planner from API:', error);
+        const local = getLocalOnigiriPlanner();
+        if (local) {
+            db.onigiriPlanner = local;
+            return local;
+        }
+        throw error;
+    }
+}
+
+export async function saveOnigiriPlanner(planner: OnigiriPlanner): Promise<OnigiriPlanner> {
+    try {
+        const payload = { ...planner } as Record<string, unknown>;
+        delete payload._id;
+        const saved = normalizeOnigiriPlanner(await apiPut<OnigiriPlanner>('onigiri', payload as Partial<OnigiriPlanner>));
+        db.onigiriPlanner = saved;
+        saveLocalOnigiriPlanner(saved);
+        return saved;
+    } catch (error) {
+        console.error('Error saving Onigiri planner:', error);
+        saveLocalOnigiriPlanner(planner);
+        throw error;
+    }
 }
 
 // --- Active Workout Management (uses localStorage) ---

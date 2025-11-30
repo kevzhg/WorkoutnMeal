@@ -6,42 +6,42 @@ const DEFAULT_PROGRAMS = [
     {
         id: 'program-default-push',
         name: 'push',
-        displayName: 'Push Day',
+        displayName: 'Push: Power + Shoulder Care',
         exercises: [
-            { id: 'push-1', name: 'Bench Press', sets: 4, reps: 8, restTime: 75, notes: 'Compound movement', exerciseType: 'power' },
-            { id: 'push-2', name: 'Shoulder Press', sets: 4, reps: 10, restTime: 75, exerciseType: 'hypertrophy' },
-            { id: 'push-3', name: 'Incline Dumbbell Press', sets: 3, reps: 12, restTime: 75, exerciseType: 'hypertrophy' },
-            { id: 'push-4', name: 'Lateral Raises', sets: 3, reps: 15, restTime: 75, exerciseType: 'hypertrophy' },
-            { id: 'push-5', name: 'Tricep Dips', sets: 3, reps: 12, restTime: 75, exerciseType: 'compound' },
-            { id: 'push-6', name: 'Tricep Pushdowns', sets: 3, reps: 15, restTime: 75, exerciseType: 'hypertrophy' }
+            { id: 'push-warmup-external-rotations', name: 'Dumbbell External Rotations', sets: 2, reps: '15 each arm', restTime: 45, notes: 'Rotator cuff rehab; control, not strength.', exerciseType: 'flexibility' },
+            { id: 'push-a-bench-press', name: 'Bench Press', sets: 4, reps: 5, restTime: 150, notes: 'Power/Strength; heavy focus.', exerciseType: 'power' },
+            { id: 'push-b-incline-dumbbell-press', name: 'Incline Dumbbell Press', sets: 3, reps: '8-10', restTime: 90, notes: 'Hypertrophy; shoulder-friendly ROM.', exerciseType: 'hypertrophy' },
+            { id: 'push-c-stand-ohp', name: 'Dumbbell Overhead Press (Standing)', sets: 3, reps: '8-10', restTime: 90, notes: 'Shoulders; controlled tempo.', exerciseType: 'compound' },
+            { id: 'push-d1-reverse-fly', name: 'Incline Dumbbell Reverse Fly', sets: 3, reps: '12-15', restTime: 60, notes: 'Rear delt/cuff health; squeeze shoulder blades.', exerciseType: 'hypertrophy' },
+            { id: 'push-d2-weighted-dips', name: 'Weighted Dips', sets: 3, reps: '8-12', restTime: 90, notes: 'Compound triceps/chest; control depth to avoid shoulder pain.', exerciseType: 'compound' }
         ],
         createdAt: new Date().toISOString()
     },
     {
         id: 'program-default-pull',
         name: 'pull',
-        displayName: 'Pull Day',
+        displayName: 'Pull: Strength + Grip',
         exercises: [
-            { id: 'pull-1', name: 'Deadlift', sets: 4, reps: 6, restTime: 75, notes: 'Heavy compound', exerciseType: 'power' },
-            { id: 'pull-2', name: 'Pull-ups', sets: 4, reps: 10, restTime: 75, exerciseType: 'compound' },
-            { id: 'pull-3', name: 'Barbell Rows', sets: 4, reps: 10, restTime: 75, exerciseType: 'hypertrophy' },
-            { id: 'pull-4', name: 'Face Pulls', sets: 3, reps: 15, restTime: 75, exerciseType: 'hypertrophy' },
-            { id: 'pull-5', name: 'Barbell Curls', sets: 3, reps: 12, restTime: 75, exerciseType: 'hypertrophy' },
-            { id: 'pull-6', name: 'Hammer Curls', sets: 3, reps: 12, restTime: 75, exerciseType: 'hypertrophy' }
+            { id: 'pull-warmup-scapular-pullups', name: 'Scapular Pull-ups (or Hangs)', sets: 2, reps: 10, restTime: 45, notes: 'Shoulder blade control; depress shoulders fully.', exerciseType: 'flexibility' },
+            { id: 'pull-a-deadlift', name: 'Deadlift (Conventional or Sumo)', sets: 4, reps: '3-5', restTime: 180, notes: 'Power/full-body strength; prioritize form.', exerciseType: 'power' },
+            { id: 'pull-b-weighted-pullups', name: 'Weighted Pull-ups (or Band-Assisted)', sets: 4, reps: '5-8', restTime: 120, notes: 'Strength/back width; progress weight or assistance.', exerciseType: 'power' },
+            { id: 'pull-c-single-arm-rows', name: 'Single-Arm Dumbbell Rows', sets: 3, reps: '10-12 each arm', restTime: 90, notes: 'Unilateral back; stability.', exerciseType: 'compound' },
+            { id: 'pull-d1-bicep-curl', name: 'Dumbbell Bicep Curl', sets: 3, reps: '10-12', restTime: 60, notes: 'Biceps focus.', exerciseType: 'hypertrophy' },
+            { id: 'pull-d2-farmers-carries', name: 'Dumbbell Farmer\'s Carries', sets: 3, reps: '40-60 sec', restTime: 75, notes: 'Grip/core/traps; walk for time or distance.', exerciseType: 'compound' }
         ],
         createdAt: new Date().toISOString()
     },
     {
         id: 'program-default-legs',
         name: 'legs',
-        displayName: 'Leg Day',
+        displayName: 'Legs: Mobility + Strength',
         exercises: [
-            { id: 'legs-1', name: 'Squats', sets: 4, reps: 8, restTime: 75, notes: 'King of exercises', exerciseType: 'power' },
-            { id: 'legs-2', name: 'Romanian Deadlifts', sets: 4, reps: 10, restTime: 75, exerciseType: 'compound' },
-            { id: 'legs-3', name: 'Leg Press', sets: 3, reps: 12, restTime: 75, exerciseType: 'hypertrophy' },
-            { id: 'legs-4', name: 'Leg Curls', sets: 3, reps: 12, restTime: 75, exerciseType: 'hypertrophy' },
-            { id: 'legs-5', name: 'Calf Raises', sets: 4, reps: 15, restTime: 75, exerciseType: 'hypertrophy' },
-            { id: 'legs-6', name: 'Lunges', sets: 3, reps: 12, restTime: 75, exerciseType: 'compound' }
+            { id: 'legs-warmup-straight-leg-raise', name: 'Active Straight Leg Raise & 90/90 Hip Rotations', sets: 1, reps: '5 mins', restTime: 30, notes: 'Leg mobility; gentle ROM increase.', exerciseType: 'flexibility' },
+            { id: 'legs-a-goblet-squat', name: 'Goblet Squat (or Box Squat)', sets: 4, reps: '8-12', restTime: 120, notes: 'Mobility-friendly; box limits depth safely.', exerciseType: 'compound' },
+            { id: 'legs-b-reverse-lunge', name: 'Reverse Lunges (or Split Squats)', sets: 3, reps: '10-12 each leg', restTime: 90, notes: 'Unilateral/stability; knee/hip friendly.', exerciseType: 'compound' },
+            { id: 'legs-c1-dumbbell-rdl', name: 'Dumbbell RDL (Romanian Deadlift)', sets: 3, reps: '10-12', restTime: 90, notes: 'Hamstrings/hips; slow, controlled hinge.', exerciseType: 'hypertrophy' },
+            { id: 'legs-c2-low-box-jumps', name: 'Low Box Jumps/Step-ups', sets: 3, reps: '8-10', restTime: 75, notes: 'Plyometric/quads; soft landings or quick step-ups.', exerciseType: 'power' },
+            { id: 'legs-d-calves-core', name: 'Calves/Core Circuit', sets: 3, reps: 'Calf raises + plank 30-60s', restTime: 45, notes: 'Standing calf raises (with DBs) plus plank (30-60 sec).', exerciseType: 'compound' }
         ],
         createdAt: new Date().toISOString()
     }
@@ -58,24 +58,24 @@ let activeTab = 'start';
 function buildExerciseLibrary() {
     const seen = new Map();
     const meta = {
-        'Bench Press': { muscles: ['Chest', 'Triceps', 'Shoulders'], equipment: 'Barbell', exerciseType: 'power' },
-        'Shoulder Press': { muscles: ['Shoulders', 'Triceps'], equipment: 'Dumbbells/Barbell', exerciseType: 'hypertrophy' },
-        'Incline Dumbbell Press': { muscles: ['Chest', 'Shoulders'], equipment: 'Dumbbells', exerciseType: 'hypertrophy' },
-        'Lateral Raises': { muscles: ['Shoulders'], equipment: 'Dumbbells', exerciseType: 'hypertrophy' },
-        'Tricep Dips': { muscles: ['Triceps', 'Chest'], equipment: 'Bodyweight', exerciseType: 'compound' },
-        'Tricep Pushdowns': { muscles: ['Triceps'], equipment: 'Cable', exerciseType: 'hypertrophy' },
-        'Deadlift': { muscles: ['Back', 'Hamstrings', 'Glutes'], equipment: 'Barbell', exerciseType: 'power' },
-        'Pull-ups': { muscles: ['Back', 'Biceps'], equipment: 'Bodyweight', exerciseType: 'compound' },
-        'Barbell Rows': { muscles: ['Back', 'Biceps'], equipment: 'Barbell', exerciseType: 'hypertrophy' },
-        'Face Pulls': { muscles: ['Rear Delts', 'Upper Back'], equipment: 'Cable', exerciseType: 'hypertrophy' },
-        'Barbell Curls': { muscles: ['Biceps'], equipment: 'Barbell', exerciseType: 'hypertrophy' },
-        'Hammer Curls': { muscles: ['Biceps', 'Forearms'], equipment: 'Dumbbells', exerciseType: 'hypertrophy' },
-        'Squats': { muscles: ['Quads', 'Glutes'], equipment: 'Barbell', exerciseType: 'power' },
-        'Romanian Deadlifts': { muscles: ['Hamstrings', 'Glutes'], equipment: 'Barbell', exerciseType: 'compound' },
-        'Leg Press': { muscles: ['Quads', 'Glutes'], equipment: 'Dumbbells', exerciseType: 'hypertrophy' },
-        'Leg Curls': { muscles: ['Hamstrings'], equipment: 'Bands', exerciseType: 'hypertrophy' },
-        'Calf Raises': { muscles: ['Calves'], equipment: 'Dumbbells', exerciseType: 'hypertrophy' },
-        'Lunges': { muscles: ['Quads', 'Glutes'], equipment: 'Dumbbells', exerciseType: 'compound' }
+        'Dumbbell External Rotations': { muscles: ['Rotator Cuff'], equipment: 'Light Dumbbells', exerciseType: 'flexibility' },
+        'Bench Press': { muscles: ['Chest', 'Triceps', 'Shoulders'], equipment: 'Barbell, Bench', exerciseType: 'power' },
+        'Incline Dumbbell Press': { muscles: ['Chest', 'Shoulders'], equipment: 'Dumbbells, Bench', exerciseType: 'hypertrophy' },
+        'Dumbbell Overhead Press (Standing)': { muscles: ['Shoulders', 'Triceps'], equipment: 'Dumbbells', exerciseType: 'compound' },
+        'Incline Dumbbell Reverse Fly': { muscles: ['Rear Delts', 'Upper Back'], equipment: 'Dumbbells, Bench', exerciseType: 'hypertrophy' },
+        'Weighted Dips': { muscles: ['Chest', 'Triceps', 'Shoulders'], equipment: 'Dip Bars/Bench, Weight Belt', exerciseType: 'compound' },
+        'Scapular Pull-ups (or Hangs)': { muscles: ['Upper Back', 'Scapular Stabilizers'], equipment: 'Pull-up Bar', exerciseType: 'flexibility' },
+        'Deadlift (Conventional or Sumo)': { muscles: ['Back', 'Glutes', 'Hamstrings'], equipment: 'Barbell or Dumbbells', exerciseType: 'power' },
+        'Weighted Pull-ups (or Band-Assisted)': { muscles: ['Back', 'Biceps'], equipment: 'Pull-up Bar, Weight/Band', exerciseType: 'power' },
+        'Single-Arm Dumbbell Rows': { muscles: ['Lats', 'Back', 'Core'], equipment: 'Dumbbells, Bench', exerciseType: 'compound' },
+        'Dumbbell Bicep Curl': { muscles: ['Biceps'], equipment: 'Dumbbells', exerciseType: 'hypertrophy' },
+        'Dumbbell Farmer\'s Carries': { muscles: ['Grip', 'Traps', 'Core'], equipment: 'Heavy Dumbbells', exerciseType: 'compound' },
+        'Active Straight Leg Raise & 90/90 Hip Rotations': { muscles: ['Hips', 'Hamstrings'], equipment: 'Floor', exerciseType: 'flexibility' },
+        'Goblet Squat (or Box Squat)': { muscles: ['Quads', 'Glutes'], equipment: 'Dumbbell, Low Box', exerciseType: 'compound' },
+        'Reverse Lunges (or Split Squats)': { muscles: ['Quads', 'Glutes'], equipment: 'Dumbbells', exerciseType: 'compound' },
+        'Dumbbell RDL (Romanian Deadlift)': { muscles: ['Hamstrings', 'Glutes'], equipment: 'Dumbbells', exerciseType: 'hypertrophy' },
+        'Low Box Jumps/Step-ups': { muscles: ['Quads', 'Glutes', 'Calves'], equipment: 'Low Box', exerciseType: 'power' },
+        'Calves/Core Circuit': { muscles: ['Calves', 'Core'], equipment: 'Dumbbells, Bodyweight', exerciseType: 'compound' }
     };
     DEFAULT_PROGRAMS.forEach(program => {
         program.exercises.forEach(ex => {

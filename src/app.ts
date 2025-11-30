@@ -31,6 +31,7 @@ import {
 } from './storage.js';
 
 import { initializeLiveWorkout, refreshLiveWorkout } from './liveWorkout.js';
+import { initializeOnigiriPlanner, refreshOnigiriPlanner } from './onigiri.js';
 
 // DOM Elements
 let currentPage = 'dashboard';
@@ -110,6 +111,9 @@ function navigateTo(page: string): void {
         case 'weight':
             renderCalendar();
             updateWeightStats();
+            break;
+        case 'onigiri':
+            refreshOnigiriPlanner();
             break;
     }
 }
@@ -724,6 +728,9 @@ async function init(): Promise<void> {
     
     // Initialize live workout
     await initializeLiveWorkout();
+
+    // Initialize Onigiri planner
+    await initializeOnigiriPlanner();
 
     // Initialize dashboard
     refreshDashboard();

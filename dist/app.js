@@ -2,6 +2,7 @@
 import { TRAINING_TYPE_LABELS, MEAL_TYPE_LABELS } from './types.js';
 import { initStorage, addTraining, getTrainings, getTrainingsByDate, deleteTraining, updateTraining, getTrainingById, addMeal, getMeals, getMealsByDate, deleteMeal, addWeightEntry, getWeightEntries, getWeightByDate } from './storage.js';
 import { initializeLiveWorkout, refreshLiveWorkout } from './liveWorkout.js';
+import { initializeOnigiriPlanner, refreshOnigiriPlanner } from './onigiri.js';
 // DOM Elements
 let currentPage = 'dashboard';
 let currentCalendarDate = new Date();
@@ -71,6 +72,9 @@ function navigateTo(page) {
         case 'weight':
             renderCalendar();
             updateWeightStats();
+            break;
+        case 'onigiri':
+            refreshOnigiriPlanner();
             break;
     }
 }
@@ -617,6 +621,8 @@ async function init() {
     initCalendarNavigation();
     // Initialize live workout
     await initializeLiveWorkout();
+    // Initialize Onigiri planner
+    await initializeOnigiriPlanner();
     // Initialize dashboard
     refreshDashboard();
 }
