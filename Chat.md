@@ -138,3 +138,6 @@
 - Exercise library now backed by Mongo: new `/api/exercises` CRUD, storage fetch/cache with local fallback, and UI form to create exercises (name/category/type/muscles/equipment). New exercises persist to DB and show up in the builder/library for constructing workouts.
 - Exercise editing: Library now supports editing existing exercises (with defaults for sets/reps/rest) via an inline form; updates persist to Mongo and refresh the builder/library lists.
 - Builder rest tuning: Each exercise row in the builder now exposes rest time input; saved programs persist rest per exercise to Mongo and live sessions use the updated rest.
+- Set rest defaults to 60s, allow per-exercise edits in the builder, auto-start rest after each completed set (including before the next exercise), and add up/down controls to reorder builder exercises.
+- Rest timer/beeps now prime the audio context for iPad/Safari, rest shows “Next: …” when moving to the following exercise, disables set buttons while resting, and re-enables automatically when rest completes or is skipped.
+- Fixed builder category selection: segmented tabs now drive the program category, so editing/saving keeps the original Push/Pull/Leg type instead of defaulting to Push.

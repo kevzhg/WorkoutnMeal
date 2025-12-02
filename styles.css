@@ -1156,6 +1156,17 @@ select:hover {
   gap: 0.5rem;
 }
 
+.builder-reorder {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.builder-reorder .btn {
+  padding: 0.25rem 0.4rem;
+  min-width: 36px;
+}
+
 .builder-exercise-actions input {
   width: 84px;
   border: 1px solid var(--border-color);

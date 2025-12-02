@@ -80,6 +80,7 @@ const DEFAULT_EXERCISE_LIBRARY: ExerciseLibraryItem[] = buildDefaultExerciseLibr
 let exerciseLibrary: ExerciseLibraryItem[] = [];
 let builderExercises: Exercise[] = [];
 let editingProgramId: string | null = null;
+let builderCategory: ProgramType = 'push';
 const CATEGORY_LABELS: Record<ProgramType, string> = { push: 'Push', pull: 'Pull', legs: 'Legs' };
 const expandedCategories: Set<ProgramType> = new Set();
 let libraryFilterCategory: ProgramType | 'all' = 'all';
@@ -180,14 +181,45 @@ let workoutStartTime: Date | null = null;
 let restEndTime: number | null = null;
 let restBeepCtx: AudioContext | null = null;
 let restBeepSource: OscillatorNode | null = null;
+let restAudioPrimed = false;
 const REST_LABEL_DEFAULT = 'Rest Time';
 const WARMUP_LABEL = 'Warm Up';
 const INITIAL_SESSION_REST_SECONDS = 300;
+const DEFAULT_SET_REST_SECONDS = 60;
 const LAST_SESSION_WEIGHTS_KEY = 'fitness-tracker-last-session-weights';
 let lastSessionWeights: Record<string, number> = {};
 
 // Weight memory - stores last used weight per exercise
 const EXERCISE_WEIGHTS_KEY = 'fitness-tracker-exercise-weights';
+
+function getRestSeconds(value?: number): number {
+    return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : DEFAULT_SET_REST_SECONDS;
+}
+
+function unlockRestAudioContext(): void {
+    if (restAudioPrimed) return;
+    const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+    if (!Ctx) return;
+
+    try {
+        let ctx: AudioContext | null = restBeepCtx;
+        if (!ctx) {
+            ctx = new Ctx();
+            restBeepCtx = ctx;
+        }
+        if (!ctx) return;
+        if (ctx.state === 'suspended') {
+            ctx.resume().catch(() => {});
+        }
+        restAudioPrimed = ctx.state === 'running';
+    } catch (error) {
+        console.error('Unable to initialize rest audio context', error);
+    }
+}
+
+['touchstart', 'mousedown', 'keydown'].forEach(evt => {
+    window.addEventListener(evt, () => unlockRestAudioContext(), { once: false, passive: true });
+});
 
 function toggleLiveHero(show: boolean): void {
     const hero = document.getElementById('live-hero');
@@ -336,7 +368,7 @@ function renderProgramCards(): void {
             const exerciseDetails = program.exercises.map(ex => `
                 <li>
                     <strong>${ex.name}</strong>
-                    <span class="program-exercise-meta">${ex.sets}×${ex.reps}${ex.restTime ? ` • ${ex.restTime}s rest` : ''}</span>
+                    <span class="program-exercise-meta">${ex.sets}×${ex.reps} • ${getRestSeconds(ex.restTime)}s rest</span>
                 </li>
             `).join('');
 
@@ -744,7 +776,6 @@ async function handleDeleteProgram(programId: string): Promise<void> {
 }
 
 function setupProgramBuilder(): void {
-    const categorySelect = document.getElementById('builder-category') as HTMLSelectElement | null;
     const addBtn = document.getElementById('builder-add-exercise') as HTMLButtonElement | null;
     const saveBtn = document.getElementById('builder-save') as HTMLButtonElement | null;
     const resetBtn = document.getElementById('builder-reset') as HTMLButtonElement | null;
@@ -752,13 +783,12 @@ function setupProgramBuilder(): void {
     const segmented = document.querySelectorAll('#builder-segmented .segment-btn');
     const searchInput = document.getElementById('builder-exercise-search') as HTMLInputElement | null;
 
-    categorySelect?.addEventListener('change', () => renderExerciseOptions());
     segmented.forEach(btn => {
         btn.addEventListener('click', (e) => {
             const value = (e.currentTarget as HTMLElement).getAttribute('data-category') as ProgramType;
             segmented.forEach(b => b.classList.remove('active'));
             (e.currentTarget as HTMLElement).classList.add('active');
-            if (categorySelect) categorySelect.value = value;
+            builderCategory = value;
             renderExerciseOptions();
         });
     });
@@ -796,11 +826,9 @@ function setupLiveTabs(): void {
 
 function renderExerciseOptions(): void {
     const select = document.getElementById('builder-exercise') as HTMLSelectElement | null;
-    const categorySelect = document.getElementById('builder-category') as HTMLSelectElement | null;
     if (!select) return;
 
-    const category = (categorySelect?.value as ProgramType) || '';
-    const options = exerciseLibrary.filter(ex => !category || ex.category === category);
+    const options = exerciseLibrary.filter(ex => !builderCategory || ex.category === builderCategory);
 
     select.innerHTML = `<option value="">Pick exercise...</option>` + options
         .map(ex => `<option value="${ex.id}">${ex.name} (${ex.category})</option>`)
@@ -809,13 +837,11 @@ function renderExerciseOptions(): void {
 
 function builderFilterExercises(term: string): void {
     const select = document.getElementById('builder-exercise') as HTMLSelectElement | null;
-    const categorySelect = document.getElementById('builder-category') as HTMLSelectElement | null;
     if (!select) return;
 
-    const category = (categorySelect?.value as ProgramType) || '';
     const normalized = term.trim().toLowerCase();
     const options = exerciseLibrary.filter(ex => {
-        const matchCategory = !category || ex.category === category;
+        const matchCategory = !builderCategory || ex.category === builderCategory;
         const matchSearch = !normalized || ex.name.toLowerCase().includes(normalized) || (ex.muscles || []).some(m => m.toLowerCase().includes(normalized));
         return matchCategory && matchSearch;
     });
@@ -832,6 +858,7 @@ function setBuilderEditingState(program: WorkoutProgram | null): void {
     const segmented = document.querySelectorAll('#builder-segmented .segment-btn');
 
     if (program) {
+        builderCategory = program.name;
         if (label) {
             label.style.display = 'block';
             label.textContent = `Editing: ${program.displayName} (${CATEGORY_LABELS[program.name] ?? program.name})`;
@@ -849,6 +876,7 @@ function setBuilderEditingState(program: WorkoutProgram | null): void {
         }
         if (cancelBtn) cancelBtn.style.display = 'none';
         if (saveBtn) saveBtn.textContent = 'Save Workout';
+        builderCategory = 'push';
         segmented.forEach((btn, idx) => {
             if (idx === 0) btn.classList.add('active'); else btn.classList.remove('active');
         });
@@ -871,7 +899,7 @@ function addExerciseToBuilder(): void {
     const template = exerciseLibrary.find(ex => ex.id === exerciseId);
     const sets = parseInt(setsInput.value || '', 10) || template?.sets || 3;
     const reps = repsInput.value.trim() || String(template?.reps ?? 10);
-    const restTime = template?.restTime ?? 75;
+    const restTime = getRestSeconds(template?.restTime);
     const name = template?.name ?? 'Exercise';
     const uniqueId = builderExercises.some(ex => ex.id === exerciseId)
         ? `${exerciseId}-${Date.now()}`
@@ -911,13 +939,16 @@ function enterEditMode(programId: string): void {
     }
 
     editingProgramId = programId;
-    const categorySelect = document.getElementById('builder-category') as HTMLSelectElement | null;
     const nameInput = document.getElementById('builder-name') as HTMLInputElement | null;
 
-    if (categorySelect) categorySelect.value = program.name;
+    builderCategory = program.name;
     if (nameInput) nameInput.value = program.displayName;
 
-    builderExercises = program.exercises.map(ex => ({ ...ex, exerciseType: ex.exerciseType ?? 'compound' }));
+    builderExercises = program.exercises.map(ex => ({
+        ...ex,
+        restTime: getRestSeconds(ex.restTime),
+        exerciseType: ex.exerciseType ?? 'compound'
+    }));
     setBuilderEditingState(program);
     setActiveTab('build');
     const segmented = document.querySelectorAll('#builder-segmented .segment-btn');
@@ -942,24 +973,33 @@ function renderBuilderExercises(): void {
         return;
     }
 
-    list.innerHTML = builderExercises.map((ex, idx) => `
+    list.innerHTML = builderExercises.map((ex, idx) => {
+        const rest = getRestSeconds(ex.restTime);
+        const isFirst = idx === 0;
+        const isLast = idx === builderExercises.length - 1;
+        return `
         <div class="builder-exercise-row" data-index="${idx}">
             <div>
                 <div class="exercise-name">${ex.name}</div>
                 <div class="builder-exercise-meta">
                     <span class="builder-chip">${ex.sets} sets</span>
                     <span class="builder-chip">${ex.reps} reps</span>
-                    <span class="builder-chip">${ex.restTime ?? 0}s rest</span>
+                    <span class="builder-chip">${rest}s rest</span>
                 </div>
             </div>
             <div class="builder-exercise-actions">
+                <div class="builder-reorder">
+                    <button class="btn btn-ghost btn-small move-up-btn" data-index="${idx}" type="button" title="Move up" ${isFirst ? 'disabled' : ''}>↑</button>
+                    <button class="btn btn-ghost btn-small move-down-btn" data-index="${idx}" type="button" title="Move down" ${isLast ? 'disabled' : ''}>↓</button>
+                </div>
                 <input type="number" class="builder-set-input" data-index="${idx}" min="1" value="${ex.sets}">
                 <input type="text" class="builder-reps-input" data-index="${idx}" value="${ex.reps}">
-                <input type="number" class="builder-rest-input" data-index="${idx}" min="0" value="${ex.restTime ?? 60}" title="Rest (sec)">
+                <input type="number" class="builder-rest-input" data-index="${idx}" min="0" value="${rest}" title="Rest (sec)">
                 <button class="btn btn-secondary btn-small remove-builder-exercise" data-index="${idx}" type="button">Remove</button>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 
     list.querySelectorAll('.builder-set-input').forEach(input => {
         input.addEventListener('change', (e) => {
@@ -984,8 +1024,31 @@ function renderBuilderExercises(): void {
         input.addEventListener('change', (e) => {
             const target = e.target as HTMLInputElement;
             const index = parseInt(target.getAttribute('data-index') || '0', 10);
-            const value = Math.max(0, parseInt(target.value || '0', 10));
+            const parsed = parseInt(target.value || '', 10);
+            const value = Number.isFinite(parsed) && parsed >= 0 ? parsed : DEFAULT_SET_REST_SECONDS;
             builderExercises[index].restTime = value;
+            renderBuilderExercises();
+        });
+    });
+
+    list.querySelectorAll('.move-up-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const index = parseInt((e.currentTarget as HTMLElement).getAttribute('data-index') || '0', 10);
+            if (index <= 0) return;
+            const [item] = builderExercises.splice(index, 1);
+            builderExercises.splice(index - 1, 0, item);
+            renderBuilderExercises();
+        });
+    });
+
+    list.querySelectorAll('.move-down-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const index = parseInt((e.currentTarget as HTMLElement).getAttribute('data-index') || '0', 10);
+            if (index >= builderExercises.length - 1) return;
+            const [item] = builderExercises.splice(index, 1);
+            builderExercises.splice(index + 1, 0, item);
             renderBuilderExercises();
         });
     });
@@ -1014,14 +1077,13 @@ function updateBuilderSummary(): void {
 }
 
 function resetBuilderForm(): void {
-    const categorySelect = document.getElementById('builder-category') as HTMLSelectElement | null;
     const nameInput = document.getElementById('builder-name') as HTMLInputElement | null;
     const setsInput = document.getElementById('builder-sets') as HTMLInputElement | null;
     const repsInput = document.getElementById('builder-reps') as HTMLInputElement | null;
 
     editingProgramId = null;
     builderExercises = [];
-    if (categorySelect) categorySelect.value = 'push';
+    builderCategory = 'push';
     if (nameInput) nameInput.value = `${CATEGORY_LABELS['push']} Session`;
     if (setsInput) setsInput.value = '4';
     if (repsInput) repsInput.value = '8';
@@ -1032,10 +1094,9 @@ function resetBuilderForm(): void {
 }
 
 async function saveBuilderProgram(): Promise<void> {
-    const categorySelect = document.getElementById('builder-category') as HTMLSelectElement | null;
     const nameInput = document.getElementById('builder-name') as HTMLInputElement | null;
 
-    const category = (categorySelect?.value as ProgramType) || 'push';
+    const category = builderCategory || 'push';
     const displayName = nameInput?.value.trim() || `${CATEGORY_LABELS[category] ?? category} Session`;
 
     if (builderExercises.length === 0) {
@@ -1043,7 +1104,10 @@ async function saveBuilderProgram(): Promise<void> {
         return;
     }
 
-    const programExercises = builderExercises.map(ex => ({ ...ex }));
+    const programExercises = builderExercises.map(ex => ({
+        ...ex,
+        restTime: getRestSeconds(ex.restTime)
+    }));
     if (editingProgramId) {
         const updated = await updateWorkoutProgram(editingProgramId, {
             name: category,
@@ -1163,6 +1227,7 @@ function renderExercises(program: WorkoutProgram, activeWorkout: ActiveWorkout):
     renderCompletedChips(program, activeWorkout);
 
     container.innerHTML = program.exercises.map((exercise, index) => {
+        const restSeconds = getRestSeconds(exercise.restTime);
         const activeExercise = activeWorkout.exercises[index];
         const isActive = index === activeWorkout.currentExerciseIndex;
         const allCompleted = activeExercise.sets.every(s => s.completed);
@@ -1173,7 +1238,7 @@ function renderExercises(program: WorkoutProgram, activeWorkout: ActiveWorkout):
                 <div class="exercise-card-header">
                     <div>
                         <div class="exercise-name">${exercise.name}</div>
-                        <div class="exercise-info">${exercise.sets} sets × ${exercise.reps} reps • ${exercise.restTime}s rest</div>
+                        <div class="exercise-info">${exercise.sets} sets × ${exercise.reps} reps • ${restSeconds}s rest</div>
                         ${exercise.notes ? `<div class="exercise-info"><em>${exercise.notes}</em></div>` : ''}
                     </div>
                     <div class="exercise-header-actions">
@@ -1245,13 +1310,15 @@ function renderCompletedChips(program: WorkoutProgram, activeWorkout: ActiveWork
 function renderSet(exercise: Exercise, set: ExerciseSet, setIndex: number, exerciseIndex: number, activeWorkout: ActiveWorkout): string {
     const isActive = exerciseIndex === activeWorkout.currentExerciseIndex && 
                      setIndex === activeWorkout.exercises[exerciseIndex].currentSet &&
-                     !set.completed;
+                     !set.completed &&
+                     !activeWorkout.isResting;
     const hasStarted = set.completed || set.partial || set.actualReps !== undefined || set.weight !== undefined || set.completedAt !== undefined;
     const isPending = !hasStarted && !isActive;
     
     const lastWeight = set.weight ?? getPreferredWeight(exercise.id);
     const partialSelected = Boolean(set.partial) || set.actualReps !== undefined;
     const targetReps = getTargetReps(exercise.reps);
+    const isResting = activeWorkout.isResting;
     
     return `
         <div class="set-item ${set.completed ? 'completed' : ''} ${isActive ? 'active' : ''} ${isPending ? 'pending' : ''}" 
@@ -1296,7 +1363,7 @@ function renderSet(exercise: Exercise, set: ExerciseSet, setIndex: number, exerc
                         data-exercise-index="${exerciseIndex}" 
                         data-set-index="${setIndex}"
                         ${!isActive ? 'disabled' : ''}>
-                    ${isActive ? 'Complete Set' : 'Locked'}
+                    ${isResting ? 'Resting…' : isActive ? 'Complete Set' : 'Locked'}
                 </button>
             ` : `
                 <div class="set-complete-meta">
@@ -1409,16 +1476,13 @@ function completeSet(exerciseIndex: number, setIndex: number): void {
     // Move to next set
     const exercise = activeWorkout.exercises[exerciseIndex];
     const nextSetIndex = exercise.sets.findIndex(s => !s.completed);
-    
+    let nextExerciseIndex = -1;
+
     if (nextSetIndex !== -1) {
         exercise.currentSet = nextSetIndex;
-        
-        // Start rest timer
-        const restTime = program.exercises[exerciseIndex].restTime;
-        startResting(restTime);
     } else {
         // All sets completed for this exercise, move to next exercise
-        const nextExerciseIndex = activeWorkout.exercises.findIndex((ex, idx) => 
+        nextExerciseIndex = activeWorkout.exercises.findIndex((ex, idx) => 
             idx > exerciseIndex && ex.sets.some(s => !s.completed)
         );
         
@@ -1427,21 +1491,35 @@ function completeSet(exerciseIndex: number, setIndex: number): void {
         }
     }
 
+    const restTime = getRestSeconds(program.exercises[exerciseIndex]?.restTime);
+    const shouldRest = (nextSetIndex !== -1 || nextExerciseIndex !== -1) && restTime > 0;
+    const restLabel = nextExerciseIndex !== -1 && nextSetIndex === -1
+        ? `Next: ${program.exercises[nextExerciseIndex].name}`
+        : REST_LABEL_DEFAULT;
+
     saveActiveWorkout(activeWorkout);
+    if (shouldRest) {
+        startResting(restTime, restLabel, activeWorkout);
+    }
     refreshLiveWorkout();
 }
 
-function startResting(seconds: number, label: string = REST_LABEL_DEFAULT): void {
-    const activeWorkout = getActiveWorkout();
+function startResting(seconds: number, label: string = REST_LABEL_DEFAULT, activeWorkoutOverride?: ActiveWorkout): void {
+    const activeWorkout = activeWorkoutOverride ?? getActiveWorkout();
     if (!activeWorkout) return;
 
+    unlockRestAudioContext();
+
+    const duration = getRestSeconds(seconds);
     activeWorkout.isResting = true;
     activeWorkout.restStartTime = new Date().toISOString();
-    activeWorkout.restDuration = seconds * 1000;
+    activeWorkout.restDuration = duration * 1000;
     activeWorkout.restLabel = label;
     saveActiveWorkout(activeWorkout);
 
-    startRestTimer(seconds, label);
+    if (duration <= 0) return;
+
+    startRestTimer(duration, label);
 }
 
 function startRestTimer(seconds: number, label: string = REST_LABEL_DEFAULT): void {
@@ -1488,7 +1566,15 @@ function stopRestBeep(): void {
 function playRestBeep(): void {
     try {
         stopRestBeep();
-        restBeepCtx = restBeepCtx || new AudioContext();
+        unlockRestAudioContext();
+        const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+        if (!restBeepCtx && Ctx) {
+            restBeepCtx = new Ctx();
+        }
+        if (!restBeepCtx) return;
+        if (restBeepCtx.state === 'suspended') {
+            restBeepCtx.resume().catch(() => {});
+        }
 
         const ctx = restBeepCtx;
         const duration = 0.12; // seconds per beep
@@ -1546,6 +1632,7 @@ function stopResting(): void {
 
     restEndTime = null;
     stopRestBeep();
+    refreshLiveWorkout();
 }
 
 function skipRest(): void {
