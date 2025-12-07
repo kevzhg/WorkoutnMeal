@@ -1,0 +1,68 @@
+ssh-keygen -t ed25519 -C "kevzhg@gmail.com"
+
+• Right now:
+
+  - Frontend on GitHub Pages (kevzhg.github.io/Homebase) points to the Render API https://homebase-
+    50dv.onrender.com/api (set in index.html when the host ends with github.io), which uses your Atlas DB.
+  - Local dev (running npm start/npm run server) points to http://localhost:8000/api and thus your local
+    MongoDB (because MONGODB_URI defaults to mongodb://localhost:27017 unless you override it).
+
+  To switch:
+
+  - Frontend: set window.API_BASE_URL to the URL you want before loading the app (e.g., in index.html);
+    otherwise it falls back to localhost.
+  - Backend: export MONGODB_URI/MONGODB_DB before npm run server to target a different DB (e.g., the Atlas URI
+    for cloud).
+
+
+    When you go to Live workout, for each type, push pull or leg, I want to be able to build custom
+  workout by selecting from a list of excerises. You can use the excerises in there for now, and
+  the current workout as a template. Then, you shuold be able to create new workout, clone any
+  existing workout, delete workouts. Each workout I can build from a list of excersises, choose set and reps, then save the workout. then I shoould be able to clone this workout. Lets go with 3 main categories. Eventually I need to saved these works to my Mongo data base
+
+  Add excerise type to each. Power, Hypertrophy, Compond, Fexlibility
+  Cardio, Each workout should display each of these on the main card, and give it a rating of the overall workout type, for example it is power focused, or Hypertrophy focused.
+
+
+
+
+  Be able to Highlight each excerise to mark it as keyt exceriSE,where then It will have a high yellow background and be starred. then for each workout and workout template, it shows number of key excercises
+
+
+  push
+  Bench press - Power
+  Incline Bench press - Hypertrophy 4x8
+  Shoulder press - Power 4x6
+  Dips - Compond
+
+  pull
+  Pullups 4x6
+
+  Also, 
+
+  Add an audible beep when rest time ends: play a “beep beep beep … beep beep beep” pattern (6 beeps total) with a short pause between the two triplets.
+
+Scope/files: live workout rest timer logic in `src/liveWorkout.ts` (and any needed audio helper). Do not affect other pages.
+
+Behavior:
+- When a rest timer completes, play 3 quick beeps, brief pause (~300–500ms), then 3 more quick beeps.
+- Use Web Audio API (or a tiny inline audio buffer) so it works without external assets. Keep volume reasonable.
+- Do not block the UI; allow overlapping timers to avoid stacking sounds (stop any current beep before starting a new one).
+- Keep all existing rest timer start/stop/reset behavior unchanged.
+
+
+Fix timer pause logic and track total vs active training time.
+
+Scope/files: live workout timer logic in `src/liveWorkout.ts` (and related UI rendering). Do not touch other pages.
+
+Requirements:
+- Bug: when paused, the timer visually stops but paused time gets added back on resume. Fix so elapsed time does not advance while paused.
+- Track two metrics per session:
+  - Total elapsed: wall-clock from start to finish (including pauses).
+  - Active training time: only unpaused time.
+- Persist both in the active workout state (resume-safe).
+- UI: show both metrics (e.g., near the timer). Format as mm:ss.
+- On pause/resume:
+  - Record pause start and accumulate paused duration to compute active time.
+  - Resume should not retroactively add paused time to active time.
+- Finish should show final total and active durations.
