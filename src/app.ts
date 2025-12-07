@@ -757,11 +757,6 @@ function initServerStatusUI(): void {
         showNotification('Reconnecting to server...');
         await reconnectToServer();
     });
-    
-    // Click on indicator to manually check
-    indicator.addEventListener('click', async () => {
-        await checkServerHealth();
-    });
 }
 
 // Initialize application
