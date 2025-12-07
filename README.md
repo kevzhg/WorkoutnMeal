@@ -143,3 +143,4 @@ The API server provides REST endpoints for data management:
 
 - Backend: MongoDB. Local dev defaults to `mongodb://localhost:27017` (DB `homebase`). Render uses Atlas via `MONGODB_URI`.
 - Frontend fallback: localStorage is used only for transient live training state and program definitions if the API is unavailable.
+# Test
